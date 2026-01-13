@@ -1,6 +1,6 @@
 from vpath.middleware.mixins import SubPathLogicMixin
 from .wrap import AsyncStorageWrapper
-from avpath.base import AsyncStorage
+from .. import AsyncStorage
 
 
 class AsyncSubStorage(AsyncStorageWrapper, SubPathLogicMixin):

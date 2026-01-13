@@ -1,4 +1,4 @@
-from avpath.base import AsyncStorage
+from avpath import AsyncStorage
 
 
 class AsyncStorageWrapper(AsyncStorage):

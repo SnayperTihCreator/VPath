@@ -1,13 +1,8 @@
-try:
-    import anyio
-    import aiofiles
-except ImportError:
-    raise ImportError(
-        "Пакет avpath требует дополнительных зависимостей. "
-        "Установите их командой: pip install vpath[async]"
-    ) from None
+from .utils import check_lib
+check_lib()
+del check_lib
 
 from .paths import AsyncVPath
-from .base import AsyncStorage
+from .storage import AsyncStorage
 from .middleware import *
-from . import storages
+from .factory import AsyncFileSystem

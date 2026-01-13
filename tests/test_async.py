@@ -1,10 +1,10 @@
 import pytest
-from vpath import FileSystem
+from avpath import AsyncFileSystem
 
 
 @pytest.mark.asyncio
 async def test_async_memory_flow():
-    path = await FileSystem.aopen("memory://async.data")
+    path = await AsyncFileSystem.open("mem://async.data")
     
     async with await path.open("w") as f:
         await f.write("hello async")
@@ -15,7 +15,7 @@ async def test_async_memory_flow():
 
 @pytest.mark.asyncio
 async def test_async_local_io(tmp_path):
-    root = await FileSystem.aopen(str(tmp_path))
+    root = await AsyncFileSystem.open(tmp_path.as_posix())
     file = root / "async_file.txt"
     
     await file.write_text("anyio power")
@@ -23,6 +23,8 @@ async def test_async_local_io(tmp_path):
     found = []
     async for item in root.iterdir():
         found.append(item.name)
+        
+    print(found)
     
     assert "async_file.txt" in found
     assert await file.read_text() == "anyio power"
@@ -30,7 +32,7 @@ async def test_async_local_io(tmp_path):
 
 @pytest.mark.asyncio
 async def test_async_mkdir_unlink(tmp_path):
-    folder = await FileSystem.aopen(str(tmp_path / "new_dir"))
+    folder = await AsyncFileSystem.open((tmp_path / "new_dir").as_posix())
     
     await folder.mkdir(parents=True)
     assert await folder.exists()

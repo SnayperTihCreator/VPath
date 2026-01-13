@@ -3,9 +3,8 @@ from vpath import FileSystem
 
 
 def test_memory_storage_flow():
-    # FileSystem.register("mem")(MemoryStorage)
     
-    path = FileSystem.open("memory://test.txt")
+    path = FileSystem.open("mem://test.txt")
     
     # Запись
     with path.open("w") as f:
@@ -22,10 +21,8 @@ def test_memory_storage_flow():
 
 
 def test_local_storage_tmp(tmp_path):
-    # Используем встроенную фикстуру pytest tmp_path
-    # FileSystem.register("file")(LocalStorage)
     
-    root = FileSystem.open(str(tmp_path))
+    root = FileSystem.open(tmp_path.as_posix())
     file_path = root / "subdir" / "file.log"
     
     file_path.write_text("data")

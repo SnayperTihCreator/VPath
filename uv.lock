@@ -147,14 +147,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiofiles", marker = "extra == 'async'", specifier = ">=25.1.0" },
-    { name = "anyio", marker = "extra == 'async'", specifier = ">=4.12.1" },
+    { name = "aiofiles", marker = "extra == 'async'", specifier = ">=24.1.0" },
+    { name = "anyio", marker = "extra == 'async'", specifier = ">=4.0.0" },
     { name = "attrs", specifier = ">=25.4.0" },
 ]
 provides-extras = ["async"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.0" },
 ]

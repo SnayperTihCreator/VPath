@@ -1,4 +1,4 @@
-from vpath.paths import Storage
+from vpath.storage import Storage
 
 
 class StorageWrapper(Storage):

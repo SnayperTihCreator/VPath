@@ -1,6 +1,6 @@
 from typing import Any, Optional, Iterator
 
-from vpath.paths import Storage
+from ..storage import Storage
 from .mixins import MultiLogicMixin
 
 

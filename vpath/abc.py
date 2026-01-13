@@ -2,10 +2,19 @@ from abc import ABC, abstractmethod
 from pathlib import PurePosixPath
 from typing import Optional, Self
 
+from attrs import define
+
 
 class BaseStorage(ABC):
-    def __init__(self, use_cache=False):
+    def __init__(self, use_cache=False, **kwargs):
         self.use_cache = use_cache
+
+
+@define
+class BaseStorageContainer(ABC):
+    def get_storage(self, root: str, **kwargs) -> BaseStorage: ...
+    
+    async def async_get_storage(self, root: str, **kwargs) -> BaseStorage: ...
 
 
 class BaseVPath(PurePosixPath, ABC):

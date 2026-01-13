@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, Optional
 
 import anyio
 
-from avpath.base import AsyncStorage
+from avpath import AsyncStorage
 from vpath.factory import FileSystem
 
 

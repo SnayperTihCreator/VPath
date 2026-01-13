@@ -1,6 +1,6 @@
 from typing import Any, AsyncIterator, Optional
 
-from avpath.base import AsyncStorage
+from avpath import AsyncStorage
 from vpath.middleware.mixins import MountLogicMixin
 
 

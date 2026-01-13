@@ -1,9 +1,8 @@
 from typing import AsyncIterator, Self
 
-from anyio import wrap_file
-
-from vpath.paths import BaseVPath, VStat
-from .base import AsyncStorage
+from vpath.utils import VStat
+from vpath.abc import BaseVPath
+from .storage import AsyncStorage
 from .utils.textio import AsyncTextIO
 
 

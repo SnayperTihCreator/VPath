@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from typing import Any, Iterator, Optional
-from vpath.paths import Storage
+from vpath.storage import Storage
 from vpath.factory import FileSystem
 
 

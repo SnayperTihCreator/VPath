@@ -2,33 +2,47 @@ import anyio
 import aiofiles
 import shutil
 from typing import Any, AsyncIterator, Optional
-from avpath.base import AsyncStorage
+from avpath import AsyncStorage
 from vpath.factory import FileSystem
 
 
 @FileSystem.register("file")
 class AsyncLocalStorage(AsyncStorage):
+    async def get_info(self, path: str) -> dict[str, Any]:
+        p = await self._full(path)
+        
+        try:
+            stat = await p.stat()
+            return {
+                "name": p.name,
+                "size": stat.st_size,
+                "type": "dir" if await p.is_dir() else "file",
+                "mtime": stat.st_mtime
+            }
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Path not found: {path}")
+    
     def __init__(self, base_path: str, **kwargs):
         super().__init__(**kwargs)
         self.base = anyio.Path(base_path)
     
     async def _full(self, path: str) -> anyio.Path:
+        p = anyio.Path(path)
+        if p.is_absolute():
+            return p
+        
         return self.base / path.lstrip("/")
-    
-    async def get_info(self, path: str) -> dict[str, Any]:
-        p = await self._full(path)
-        stat = await p.stat()
-        return {
-            "name": p.name,
-            "size": stat.st_size,
-            "type": "dir" if await p.is_dir() else "file",
-            "mtime": stat.st_mtime
-        }
     
     async def list_dir(self, path: str) -> AsyncIterator[tuple[str, Optional[dict]]]:
         p = await self._full(path)
         async for entry in p.iterdir():
-            info = await self.get_info(entry.as_posix())
+            stat = await entry.stat()
+            info = {
+                "name": entry.name,
+                "size": stat.st_size,
+                "type": "dir" if await entry.is_dir() else "file",
+                "mtime": stat.st_mtime
+            }
             yield entry.name, info
     
     async def open(self, path: str, mode: str) -> Any:

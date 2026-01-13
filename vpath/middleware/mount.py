@@ -1,6 +1,6 @@
 from typing import Any, Iterator, Optional
 
-from vpath.paths import Storage
+from ..storage import Storage
 from .mixins import MountLogicMixin
 
 

@@ -1,61 +1,9 @@
-from abc import ABC, abstractmethod
 from io import TextIOWrapper
-from typing import Optional, Self, Any, Iterator
+from typing import Self
 
-from attrs import define, field
-
-from .base import BaseStorage, BaseVPath
-
-
-@define(frozen=True, repr=False)
-class VStat:
-    _data: dict = field(alias="metadata")
-    
-    @property
-    def st_size(self) -> int:
-        return self._data.get("size", 0)
-    
-    @property
-    def st_mtime(self) -> float:
-        return self._data.get("mtime", 0.0)
-    
-    @property
-    def is_dir(self) -> bool:
-        return self._data.get("type") == "dir"
-    
-    def __getitem__(self, key):
-        return self._data[key]
-    
-    def __getattr__(self, name):
-        if name in self._data:
-            return self._data[name]
-        raise AttributeError(f"'VStat' object has no attribute '{name}'")
-    
-    def __repr__(self):
-        return f"vstat_result(size={self.st_size}, type='{self._data.get('type', 'unknown')}')"
-
-
-class Storage(BaseStorage, ABC):
-    @abstractmethod
-    def get_info(self, path: str) -> dict[str, Any]: ...
-    
-    @abstractmethod
-    def list_dir(self, path: str) -> Iterator[tuple[str, Optional[dict]]]: ...
-    
-    @abstractmethod
-    def open(self, path: str, mode: str) -> Any: ...
-    
-    @abstractmethod
-    def exists(self, path: str) -> bool: ...
-    
-    @abstractmethod
-    def unlink(self, path: str): ...
-    
-    @abstractmethod
-    def mkdir(self, path: str, mode: int, parents: bool, exist_ok: bool): ...
-    
-    @abstractmethod
-    def rename(self, src: str, dest: str): ...
+from .abc import BaseVPath
+from .storage import Storage
+from .utils import VStat
 
 
 class VPath(BaseVPath):

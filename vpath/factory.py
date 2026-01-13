@@ -1,57 +1,64 @@
 from __future__ import annotations
-from typing import Type
+import importlib.metadata
+from typing import Type, Optional
 
-from .base import BaseVPath
-from .paths import VPath, Storage
-from .protocols import AsyncStorageProtocol, AsyncVPathProtocol
+from attrs import define
+
+from .abc import BaseStorageContainer
+from .utils import MetaSingleton, URLParser, LazyLoader
+from .paths import VPath
+from .storage import Storage
 
 
-class _MetaSingleton(type):
-    _instances = None
+@define
+class DefaultStorageContainer(BaseStorageContainer):
+    storage: Type[Storage]
     
-    def __call__(cls, *args, **kwargs):
-        if cls._instances is None:
-            cls._instances = super().__call__(*args, **kwargs)
-        return cls._instances
+    def get_storage(self, root: str, **kwargs) -> Storage:
+        if not isinstance(self.storage, type) and hasattr(self.storage, 'load'):
+            self.storage = self.storage.load()
+        return self.storage(root, **kwargs)
 
 
-class FileSystem(metaclass=_MetaSingleton):
-    _sync_drivers: dict[str, Type[Storage]] = {}
-    _async_drivers: dict[str, Type[AsyncStorageProtocol]] = {}
+class FileSystem(metaclass=MetaSingleton):
+    _registry: dict[str, BaseStorageContainer] = {}
+    _loaded: bool = False
+    _built_in = {
+        "file": "vpath.storages.local:LocalStorage",
+        "mem": "vpath.storages.memory:MemoryStorage",
+    }
     
     @classmethod
-    def register(cls, scheme: str):
-        def wrapper(cls_obj):
-            mro_names = [base.__name__ for base in cls_obj.__mro__]
-            
-            if 'Storage' in mro_names:
-                cls._sync_drivers[scheme] = cls_obj
-            if 'AsyncStorage' in mro_names:
-                cls._async_drivers[scheme] = cls_obj
+    def register(cls, *schemes: str, container: Optional[BaseStorageContainer] = None):
+        def wrapper(cls_obj: Type[Storage]):
+            for s in schemes:
+                cls._registry[s] = container or DefaultStorageContainer(cls_obj)
             return cls_obj
         
         return wrapper
     
     @classmethod
-    def open(cls, url: str, **kwargs) -> VPath:
-        scheme, full_path = url.split("://", 1) if "://" in url else ("file", url)
-        if scheme not in cls._sync_drivers:
-            raise ValueError(f"Sync driver {scheme} not found")
-        storage_instance = cls._sync_drivers[scheme]("/", **kwargs)
-        return VPath(full_path, storage=storage_instance)
+    def add_container(cls, scheme: str, container: BaseStorageContainer):
+        cls._registry[scheme] = container
     
     @classmethod
-    async def aopen(cls, url: str, **kwargs) -> AsyncVPathProtocol | BaseVPath:
-        try:
-            from avpath import AsyncVPath, AsyncStorage
-        except ImportError:
-            raise ImportError(
-                "AsyncVPath requires 'vpath[async]' dependencies. "
-                "Install them with: pip install vpath[async]"
-            )
+    def open(cls, url: str, **kwargs) -> VPath:
+        cls._ensure_loaded()
+        scheme, folder, file, _, url_args = URLParser.parse(url)
         
-        scheme, full_path = url.split("://", 1) if "://" in url else ("file", url)
-        if scheme not in cls._async_drivers:
-            raise ValueError(f"Async driver {scheme} not found")
-        storage_instance: AsyncStorage = cls._async_drivers[scheme]("/", **kwargs)
-        return AsyncVPath(full_path, storage=storage_instance)
+        if scheme not in cls._registry:
+            raise ValueError(f"Sync driver for '{scheme}' not found")
+        
+        container = cls._registry[scheme]
+        storage = container.get_storage(root=folder, **{**url_args, **kwargs})
+        return VPath(file, storage=storage)
+    
+    @classmethod
+    def _ensure_loaded(cls):
+        if cls._loaded: return
+        for s, path in cls._built_in.items():
+            if s not in cls._registry:
+                cls.add_container(s, DefaultStorageContainer(LazyLoader(path)))
+        for entry in importlib.metadata.entry_points(group='vpath.sync_drivers'):
+            cls.add_container(entry.name, DefaultStorageContainer(entry))
+        cls._loaded = True
